@@ -1,0 +1,67 @@
+# hello-world-deploy.yaml
+apiVersion: apps/v1
+kind: Deployment
+  metadata:
+    name: devops-test
+    namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: devops-test  
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: devops-test
+    spec:
+      containers:
+        image: devops:test
+        imagePullPolicy: Never
+        name: devops-hello-world
+            command: [ "sh", "-c"]
+            args:
+              export JAVA_OPTS="-Xmx${mem-limit}-Xms${mem-request}"     
+        ports:
+          - containerPort: 8080
+            protocol: TCP
+        resources:
+          limits:
+            memory: 12Gi
+          requests:
+            memory: 12Gi
+        env:
+          - name: mem-request
+            valueFrom:
+              resourceFieldRef:
+                containerName: devops-hello-world
+                resource: requests.memory
+          - name: mem-limit
+            valueFrom:
+              resourceFieldRef:
+                containerName: devops-hello-world
+                resource: limits.memory
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 60
+          periodSeconds: 3600
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 60
+          periodSeconds: 3600
+        volumeMounts:
+          - name: config-volume
+            mountPath: /opt/config
+            subPath: application.properties
+        volumes:
+          - name: config-volume
+            hostPath:
+              path: /app/tomcat/config-dir
