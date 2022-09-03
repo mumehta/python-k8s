@@ -1,0 +1,10 @@
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: munish
+  namespace: default
+data:
+  netflix: money-heist
+  prime: paper-girls
+type: Opaque
